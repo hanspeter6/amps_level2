@@ -34,7 +34,7 @@ df_input <- cbind(lh_df, rh_df)
 # populating the dataframe (in this case, based on equal weights - should be comparible to default emmeans)
 
 for(i in 1:nrow(df)) {
-  for(j in 3:22) { # only the non interaction terms and excluding the first two (year, category)
+  for(j in 3:22) { # only the non interaction terms and excluding the first two columns (year, category)
     
     if(names(df)[j] == paste0("year.",as.character(df[i,1])) | names(df)[j] == as.character(df[i,2])) { # 1 for given level and year
       df[i,j] <- 1
@@ -65,14 +65,21 @@ for(i in 1:nrow(df)) {
 
 # working on option for proportional values instead of equal weighting:
 
-length(df_input)
+# trying to create a proportions vector:
+out <- list()
+vec <- vector()
 
+for(i in c("age", "sex", "edu", "hh.inc","race","lsm")) {
+  temp1 <- table(set_min_st[,i])/length(set_min_st[,i])
+  
+  vec <- append(vec, paste0(i,".",seq(length(temp1))))
+  
+  out <- append(out, temp1)
+  
+  out <- as.numeric(as.vector(unlist(out)))
+}
 
-
-
-
-
-
+test <- cbind.data.frame(vec,out)
 
 # populating the remainder of the dataframe to be used in matrix multiplication (multiplying relevant columns of non interaction terms)
 df[,23:38] <- df[,3]*df[,c(7:22)]
