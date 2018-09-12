@@ -19,7 +19,7 @@ set_min <- readRDS("/Users/hans-peterbakker/Dropbox/Statistics/UCTDataScience/Th
 # set_min_st <- cbind.data.frame(set_min[,1:which(names(set_min) == "all")], scale(set_min[,(which(names(set_min) == "all") + 1):ncol(set_min)]))
 
 # draw single (for now) bootstrap version of only 2000 cases
-set_boot <- set_min[sample(nrow(set_min), size = 2000, replace = TRUE),]
+set_boot <- set_min[sample(nrow(set_min), replace = TRUE, size = 20000),] # for smaller sampling, size = 2000
 
 # adding dummies to prepare frame for SEM:
 mod_boot <- dummy.data.frame( data = set_boot[,-c(1,2,5,10:13,15:21)], names = c("year", "age", "sex", "edu", "hh.inc", "race", "lsm"), sep = "." )
@@ -202,7 +202,7 @@ vector_row1 <- c("male", "female","15-24","25-44", "45-54","55+","black", "colou
 vector_row2 <- c("<matric", "matric",">matric", "<R2500","R2500-R6999","R7000-R11999",">=R12000", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
 
 # function for plotting fitted models
-plot_fitted <- function(data, factor) { # factor: one of...
+plot_fitted <- function(data1,data2, factor) { # factor: one of...
   
   if(factor == "print5") {
     a <- "mean"
@@ -248,89 +248,84 @@ plot_fitted <- function(data, factor) { # factor: one of...
   }
   
   #plot
-  ggplot(data = data, aes_string("year", a, group = "category")) +
-    geom_point(color = "blue", size = 1, fill = "white", alpha = 0.5) +
-    geom_line(size = 0.2) +
+  ggplot(data = data1, aes_string("year", a, group = "category")) +
+    geom_line(color = "blue", size = 0.2) +
+
+    geom_line(data = data2, aes_string("year", a, group = "category"), color = "red", size = 0.2) +
+    
+    geom_hline(yintercept = mean(lavPredict(fit_sem)[,factor]), size = 0.1) +
+    
+
     facet_grid(.~ category) + theme(axis.text.x = element_text(size = 6)) +
     # geom_errorbar(aes_string(ymax = c, ymin = d), size = 0.3, width = 0.4, alpha = 0.5) +
-    labs(y = e, title = f)
+    labs(y = e)
     # coord_cartesian(ylim=c(-0.5, 0.5)) + 
     # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.2))
   
 }
 
-
 ## print5
-
-### equal
-print5_equal_up <- plot_fitted(data = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "print5"),],
+print5_up <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "print5"),],
+                               data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "print5"),],
                                 factor = "print5")
-print5_equal_down <- plot_fitted(data = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "print5"),],
+print5_down <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "print5"),],
+                               data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "print5"),],
                                factor = "print5")
-jpeg("print5_emm_equal.jpeg", quality = 100)
-grid.arrange(print5_equal_up, print5_equal_down, nrow = 2)
-dev.off()
-
-### proportional
-print5_proportional_up <- plot_fitted(data = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "print5"),],
-                               factor = "print5")
-print5_proportional_down <- plot_fitted(data = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "print5"),],
-                                 factor = "print5")
-jpeg("print5_emm_proportional.jpeg", quality = 100)
-grid.arrange(print5_proportional_up, print5_proportional_down, nrow = 2)
+jpeg("print5_emm.jpeg", quality = 100)
+grid.arrange(print5_up, print5_down, nrow = 2, top = "print5")
 dev.off()
 
 ## afrikaans
-pf_afrikaans_up <- plot_fitted_2(data = afrikaans[which(afrikaans$category %in% vector_row1),],
-                                 factor = "afrikaans")
-pf_afrikaans_down <- plot_fitted_2(data = afrikaans[which(afrikaans$category %in% vector_row2),],
-                                   factor = "afrikaans")
-jpeg("afrikaans_emmeans.jpeg", quality = 100)
-grid.arrange(pf_afrikaans_up, pf_afrikaans_down, nrow = 2)
+afrikaans_up <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "afrikaans"),],
+                         data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "afrikaans"),],
+                         factor = "afrikaans")
+afrikaans_down <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "afrikaans"),],
+                           data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "afrikaans"),],
+                           factor = "afrikaans")
+jpeg("afrikaans_emm.jpeg", quality = 100)
+grid.arrange(afrikaans_up, afrikaans_down, nrow = 2, top = "afrikaans")
 dev.off()
 
 ## african
-pf_african_up <- plot_fitted_2(data = african[which(african$category %in% vector_row1),],
-                               factor = "african")
-pf_african_down <- plot_fitted_2(data = african[which(african$category %in% vector_row2),],
-                                 factor = "african")
-jpeg("african_emmeans.jpeg", quality = 100)
-grid.arrange(pf_african_up, pf_african_down, nrow = 2)
-dev.off()
-
-## soccer
-pf_soccer_up <- plot_fitted_2(data = soccer[which(soccer$category %in% vector_row1),],
-                              factor = "soccer")
-pf_soccer_down <- plot_fitted_2(data = soccer[which(soccer$category %in% vector_row2),],
-                                factor = "soccer")
-jpeg("soccer_emmeans.jpeg", quality = 100)
-grid.arrange(pf_soccer_up, pf_soccer_down, nrow = 2)
+african_up <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "african"),],
+                         data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "african"),],
+                         factor = "african")
+african_down <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "african"),],
+                           data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "african"),],
+                           factor = "african")
+jpeg("african_emm.jpeg", quality = 100)
+grid.arrange(african_up, african_down, nrow = 2, top = "african")
 dev.off()
 
 ## social
-pf_social_up <- plot_fitted_2(data = social[which(social$category %in% vector_row1),],
-                              factor = "social")
-pf_social_down <- plot_fitted_2(data = social[which(social$category %in% vector_row2),],
-                                factor = "social")
-jpeg("social_emmeans.jpeg", quality = 100)
-grid.arrange(pf_social_up, pf_social_down, nrow = 2)
+social_up <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "social"),],
+                         data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "social"),],
+                         factor = "social")
+social_down <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "social"),],
+                           data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "social"),],
+                           factor = "social")
+jpeg("social_emm.jpeg", quality = 100)
+grid.arrange(social_up, social_down, nrow = 2, top = "social")
 dev.off()
 
 ## freeTV
-pf_freeTV_up <- plot_fitted_2(data = freeTV[which(freeTV$category %in% vector_row1),],
-                              factor = "freeTV")
-pf_freeTV_down <- plot_fitted_2(data = freeTV[which(freeTV$category %in% vector_row2),],
-                                factor = "freeTV")
-jpeg("freeTV_emmeans.jpeg", quality = 100)
-grid.arrange(pf_freeTV_up, pf_freeTV_down, nrow = 2)
+freeTV_up <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "freeTV"),],
+                         data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "freeTV"),],
+                         factor = "freeTV")
+freeTV_down <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "freeTV"),],
+                           data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "freeTV"),],
+                           factor = "freeTV")
+jpeg("freeTV_emm.jpeg", quality = 100)
+grid.arrange(freeTV_up, freeTV_down, nrow = 2, top = "freeTV")
 dev.off()
 
-## news
-pf_news_up <- plot_fitted_2(data = news[which(news$category %in% vector_row1),],
-                            factor = "news")
-pf_news_down <- plot_fitted_2(data = news[which(news$category %in% vector_row2),],
-                              factor = "news")
-jpeg("news_emmeans.jpeg", quality = 100)
-grid.arrange(pf_news_up, pf_news_down, nrow = 2)
+## intNews
+intNews_up <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row1 & emmeans_equal_long$factor == "intNews"),],
+                         data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row1 & emmeans_proportional_long$factor == "intNews"),],
+                         factor = "intNews")
+intNews_down <- plot_fitted(data1 = emmeans_equal_long[which(emmeans_equal_long$category %in% vector_row2 & emmeans_equal_long$factor == "intNews"),],
+                           data2 = emmeans_proportional_long[which(emmeans_proportional_long$category %in% vector_row2 & emmeans_proportional_long$factor == "intNews"),],
+                           factor = "intNews")
+jpeg("intNews_emm.jpeg", quality = 100)
+grid.arrange(intNews_up, intNews_down, nrow = 2, top = "intNews")
 dev.off()
-
