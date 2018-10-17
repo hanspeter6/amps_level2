@@ -1,4 +1,5 @@
 library(tidyverse)
+library(gridExtra)
 ### for processing of boot outputs
 
 # # read the output again
@@ -47,6 +48,15 @@ emm_set <- cbind.data.frame(out_all[[1]][,1:3],
   mutate(upper = c(prop.upper,equal.upper),
          lower = c(prop.lower,equal.lower))
 
+# want to reorder the "category" variables to place gender first for comparible plotting with "type":
+emm_set$category <- factor(emm_set$category, levels = c("male", "female",
+                                            "15-24", "25-44", "45-54", "55+",
+                                            "black", "coloured", "indian",  "white",
+                                            "<matric", "matric",  ">matric",
+                                            "<R2500", "R2500-R6999", "R7000-R11999", ">=R12000",
+                                            "LSM1-2",  "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10"))
+
+
 # function for plotting fitted models
 plot_emms <- function(dataset, fact) { # factor: one of...
   
@@ -75,7 +85,6 @@ plot_emms <- function(dataset, fact) { # factor: one of...
     geom_line(size = 0.5) +
     facet_grid(.~ category) +
     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
-    theme(axis.text.x = element_text(size = 6)) +
     labs(y = "engagement")
   
   #extract legend
@@ -98,6 +107,63 @@ plot_emms <- function(dataset, fact) { # factor: one of...
   # coord_cartesian(ylim=c(-0.5, 0.5)) + 
   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.2))
 }
+
+# # testing function for plotting fitted models
+# plot_emms_tester <- function(dataset, fact) { # factor: one of...
+#   
+#   # making sure I have the packages
+#   require(tidyverse)
+#   require(gridExtra)
+#   
+#   # define upper and lower plots
+#   row1 <- c("male", "female","15-24","25-44", "45-54","55+","black", "coloured", "indian", "white")
+#   row2 <- c("<matric", "matric",">matric", "<R2500","R2500-R6999","R7000-R11999",">=R12000", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
+#   
+#   # subset the data by factor
+#   factor_data <- dataset %>% filter(factor == fact)
+#   
+#   # row one plot
+#   plot_row1 <- ggplot(data = factor_data[which(factor_data$category %in% row1),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+#     geom_line(size = 0.5) +
+#     facet_grid(.~ category) +
+#     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
+#     theme(axis.text.x = element_text(size = 6)) +
+#     labs(y = "engagement") +
+#     theme(legend.position = "bottom")
+#   
+#   # row two plot
+#   plot_row2 <-  ggplot(data = factor_data[which(factor_data$category %in% row2),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+#     geom_line(size = 0.5) +
+#     facet_grid(.~ category) +
+#     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
+#     theme(axis.text.x = element_text(size = 2),
+#           axis.text.y = element_text(size = 1),
+#           axis.title.x = element_text(size = 2),
+#           axis.title.y = element_text(size = 2),
+#           strip.text.x = element_text(size = 2),
+#           ) +
+#     labs(y = "engagement")
+#   
+#   #extract legend
+#   ##https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs
+#   g_legend <- function(a.gplot) {
+#     tmp <- ggplot_gtable(ggplot_build(a.gplot))
+#     leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+#     legend <- tmp$grobs[[leg]]
+#     return(legend)}
+#   
+#   mylegend<-g_legend(plot_row1)
+#   
+#   grid.arrange(arrangeGrob(plot_row1 + theme(legend.position="none"),
+#                            plot_row2 + theme(legend.position="none")),
+#                top = paste0("Estimated Marginal Means: ", "'", fact, "'"),
+#                mylegend,
+#                nrow=2,
+#                heights=c(10, 1))
+#   
+#   # coord_cartesian(ylim=c(-0.5, 0.5)) + 
+#   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.2))
+# }
 
 jpeg("print5_emm.jpeg", quality = 100)
 plot_emms(emm_set, "print5")
