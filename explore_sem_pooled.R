@@ -67,29 +67,73 @@ mshapiro.test(t(as.matrix(set_min_simple_print[sample(nrow(set_min_simple_print)
 
 # secondly using package "MVN" ??
 test_mvn <- mvn(set_min_simple_print[sample(nrow(set_min_simple_print), size = 5000),c(22:49)], multivariatePlot = "qq")
-# or try as a whole with log transform:
-hist(log(as.matrix(set_min_simple_print[,c(22:49)]))) # bell,,, discrete...
+# # or try as a whole with log transform:
+# hist(log(as.matrix(set_min_simple_print[,c(22:49)]))) # bell,,, discrete...
 
 
 # definately not MVN data!!!
 
 # maybe use argument of big sample size...and also compare outcomes of ml and pa.. amd use of bootrapping (see:http://web.pdx.edu/~newsomj/semclass/ho_estimate.pdf)
 
+set_pca <- prcomp(set_min_simple_print[,strt:lst])
+set_pca$sdev^2
+
+plot(set_pca)
+dim(set_pca$x) # 28 variables
+
+
+jpeg("freq_scores_per.jpeg")
+par(mfrow = c(3,2))
+for(i in 1:6) {
+  set <- set_pca$x[,i]
+  h <- hist(set, breaks = 50, density = 60, col = 'lightgray',
+            xlab = "", ylab = "", main = paste0("PC", i),
+            yaxt = "n", cex.lab = 0.8, cex.axis = 0.8, cex.main = 0.8)
+  xfit <- seq(min(set), max(set), length = 40) 
+  yfit <- dnorm(xfit, mean = mean(set), sd = sd(set)) 
+  yfit <- yfit * diff(h$mids[1:2]) * length(set) 
+  lines(xfit, yfit, col = "orange", lwd = 1)
+  mtext("Seperate Histograms of Principal Components 1-6", side = 3, line = -1.5, outer = TRUE)
+}
+dev.off()
+
+set = set_pca$x[,1:6]
+jpeg("freq_scores_all.jpeg")
+h <- hist(set, breaks = 50, density = 60, col = 'lightgray',
+          xlab = "scores", ylab = "frequency", main = "Histogram of 1-6 Combined Principal Components",
+          yaxt = "n")
+xfit <- seq(min(set), max(set), length = 40) 
+yfit <- dnorm(xfit, mean = mean(set), sd = sd(set)) 
+yfit <- yfit * diff(h$mids[1:2]) * length(set) 
+lines(xfit, yfit, col = "orange", lwd = 1)
+dev.off()
+
+# considering no of components using Afifi etal... see section on PCA in thesis:
+# only those pc's  explaining at least 100/p % of the total variance are selected.
+
+
+
 # to compare ML and PA methods of factor extraction on the full set...for now with 6 factors (between 5 and 8)
 # extract factors (using pa method and common factor extraction)
+set.seed(123)
 factors_set_min_simple_print_pa <- fa(r = set_min_simple_print[,strt:lst], nfactors = 6, fm = "pa")
+set.seed(123)
 factors_set_min_simple_print_ml <- fa(r = set_min_simple_print[,strt:lst], nfactors = 6, fm = "ml")
 
 # comparing the loadings shows much the same variables loading together....
 loadings_pa <- round(factors_set_min_simple_print_pa$loadings, 3)
 loadings_ml <- round(factors_set_min_simple_print_ml$loadings, 3)
 
-## correlating the scores...and the loadings.. ??? very strong correlations...
-cor(factors_set_min_simple_print_pa$scores, factors_set_min_simple_print_ml$scores)
-cor(loadings_pa, loadings_ml)
+## correlating the scores...and the loadings.. ??? very strong correlations..
+diag(cor(factors_set_min_simple_print_pa$scores, factors_set_min_simple_print_ml$scores))
+diag(cor(loadings_pa, loadings_ml))
+
+
+cor(factors_set_min_simple_print_ml$scores)
+# write the loadings to table for publishing
+write.csv(loadings_ml, file = "efa_loadings.csv")
 
 # define simple CFA model to apply for now based on these loadings...
-
 model_cfa <- 
   '
 # latent variable definitions:
@@ -101,6 +145,65 @@ freeTV =~ e.tv + SABC.1 + SABC.2 + SABC.3
 intnews =~ int.print + int.news
 
 '
+# #consider cfa by year and pooled:
+
+# creating separate sets by year (NB from unstandarised set...):
+set_min_simple_print_02 <- set_min_simple_print %>%
+  filter(year ==  2002)
+set_min_simple_print_08 <- set_min_simple_print %>%
+  filter(year ==  2008)
+set_min_simple_print_10 <- set_min_simple_print %>%
+  filter(year ==  2010)
+set_min_simple_print_12 <- set_min_simple_print %>%
+  filter(year ==  2012)
+set_min_simple_print_14 <- set_min_simple_print %>%
+  filter(year ==  2014)
+
+saveRDS(set_min_simple_print_02, "set_min_simple_print_02.rds")
+saveRDS(set_min_simple_print_08, "set_min_simple_print_08.rds")
+saveRDS(set_min_simple_print_10, "set_min_simple_print_10.rds")
+saveRDS(set_min_simple_print_12, "set_min_simple_print_12.rds")
+saveRDS(set_min_simple_print_14, "set_min_simple_print_14.rds")
+
+# read back
+set_min_simple_print_02 <- readRDS("set_min_simple_print_02.rds")
+set_min_simple_print_08 <- readRDS("set_min_simple_print_08.rds")
+set_min_simple_print_10 <- readRDS("set_min_simple_print_10.rds")
+set_min_simple_print_12 <- readRDS("set_min_simple_print_12.rds")
+set_min_simple_print_14 <- readRDS("set_min_simple_print_14.rds")
+
+
+# consider and compare latent structures of simple confirmatory model fits by year
+set.seed(123)
+lavaanList_fit <- semList(model = model_cfa, dataList = list(set_min_simple_print_02, set_min_simple_print_08, set_min_simple_print_10, set_min_simple_print_12, set_min_simple_print_14, set_min_simple_print), store.slots = "partable", std.lv = TRUE, meanstructure = TRUE) 
+coeffs <- coef(lavaanList_fit)
+colnames(coeffs) <- c("2002", "2008", "2010", "2012", "2014", "Pooled")
+cor(coeffs)
+
+# consider fit measures for confirmatory factor analysis per period (and then for full pooled sets)
+set.seed(123)
+fit_cfa_02 <- lavaan::cfa(model_cfa, data = set_min_simple_print_02, std.lv = TRUE, meanstructure = TRUE)
+round(fitMeasures(fit_cfa_02)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
+
+set.seed(123)
+fit_cfa_08 <- lavaan::cfa(model_cfa, data = set_min_simple_print_08, std.lv = TRUE, meanstructure = TRUE)
+round(fitMeasures(fit_cfa_08)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
+
+set.seed(123)
+fit_cfa_10 <- lavaan::cfa(model_cfa, data = set_min_simple_print_10, std.lv = TRUE, meanstructure = TRUE)
+round(fitMeasures(fit_cfa_10)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
+
+set.seed(123)
+fit_cfa_12 <- lavaan::cfa(model_cfa, data = set_min_simple_print_12, std.lv = TRUE, meanstructure = TRUE)
+round(fitMeasures(fit_cfa_12)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
+
+set.seed(123)
+fit_cfa_14 <- lavaan::cfa(model_cfa, data = set_min_simple_print_14, std.lv = TRUE, meanstructure = TRUE)
+round(fitMeasures(fit_cfa_14)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
+
+set.seed(123)
+fit_cfa <- lavaan::cfa(model = model_cfa, data = set_min_simple_print, std.lv = TRUE, meanstructure = TRUE)
+round(fitMeasures(fit_cfa)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
 
 # do simple fit to assess fit of CFA on pooled and standardised data.
 
@@ -111,7 +214,118 @@ intnews =~ int.print + int.news
 #  `fit<-cfa(model, data=df, std.lv=T)`
 # Adding std.lv=T tells lavaan to use a standardized scale for the latent variable instead of fixing a loading to 1.
 
-fit_cfa <- lavaan::cfa(model = model_cfa, data = set_min_simple_print, std.lv = TRUE)
+
+
+
+
+
+
+
+
+# predictions (scores)
+fit_cfa_predictions <- lavPredict(fit_cfa)
+summary(fit_cfa_predictions)
+hist(fit_cfa_predictions[,'social']) # o
+
+# identify highest positive score for each case:
+top_scores <- apply(fit_cfa_predictions, 1, function(v) names(v)[which.max(v)])
+
+
+# manipulate set for graphics
+set_tops <- set_min_simple_print %>%
+  mutate(top = top_scores) %>%
+  mutate(POPULATION = "POPULATION") %>%
+  gather(key = "toPop", value = "tops", top, POPULATION)
+
+# order factors
+set_tops$tops <- factor(set_tops$tops, levels = c("POPULATION", "freeTV", "intnews", "african", "afrikaans", "social", "print5"))
+
+##  some graphics to illustrate profiles of factors:
+
+# name factor levels
+# set factor labels (NB double check levels)
+set_tops$age <- factor(set_tops$age, labels = c("15-24","25-44", "45-54","55+"), ordered = FALSE)
+set_tops$race <- factor(set_tops$race,labels = c("black", "coloured", "indian", "white"), ordered = FALSE)
+set_tops$edu <- factor(set_tops$edu, labels = c("<matric", "matric",">matric" ) ,ordered = FALSE)
+set_tops$lsm <- factor(set_tops$lsm, labels = c("LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10"), ordered = FALSE)
+set_tops$sex <- factor(set_tops$sex, labels = c("male", "female"), ordered = FALSE)
+set_tops$hh.inc <- factor(set_tops$hh.inc, labels = c("<R2500","R2500-R6999","R7000-R11999",">=R12000"), ordered = FALSE)
+set_tops$year <- factor(set_tops$year, ordered = FALSE)
+
+#plot counts and proportions of factors in population:
+jpeg('factors_proportions.jpeg', quality = 100, type = "cairo")
+ggplot( set_tops %>%
+         filter(tops != "POPULATION") %>%
+         group_by(tops) %>%
+         count() %>%
+         mutate(percent = (n/(nrow(set_tops)/2)*100)) ) +
+  aes(x = tops, y = n, label = paste0(round(percent), "%"), fill = c("2")) +
+  geom_bar(stat = 'identity', show.legend = FALSE) +
+  # scale_fill_brewer(palette = "Spectral")
+  geom_text(position = "stack", size = 4) +
+  labs(y = "count", title = "Total Sample Proportions") +
+  theme(axis.title.x = element_blank())
+dev.off()
+
+# plotting function used in descriptives elsewhere, amended here:
+plot_demogs_tops <- function(set, category, palette = c("Dark2", "Accent", "Spectral", "Paired", "Pastel2", "Set2","Set3"), title = category) {
+  by_factor <- set %>%
+    group_by(tops) %>%
+    count_(category) %>%
+    mutate(total = sum(n)) %>%
+    mutate(percent = (n/total)*100) %>%
+    mutate(pos = cumsum(percent) - (0.5 * percent))
+  
+  label <- paste0(round(100*(by_factor$n/by_factor$total)),"%")
+  
+  ggplot(by_factor) +
+    aes_string(x = "tops", y = "percent", fill =  category, label = "label" ) +
+    geom_bar(stat = 'identity') +
+    geom_text(position = "stack", size = 3) +
+    # geom_text(aes_string(x = "top", y = "pos"), position = "stack", size = 3) +
+    labs(title = title) +
+    scale_fill_brewer(palette = palette) +
+    guides(fill = guide_legend(title = NULL)) +
+    theme(legend.position = "bottom",
+          legend.direction = "horizontal",
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank())
+          
+}
+
+jpeg('demog_factors_year.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "year", palette = "Dark2", title = "Year")
+dev.off()
+
+jpeg('demog_factors_sex.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "sex", palette = "Accent", title = "Gender")
+dev.off()
+
+jpeg('demog_factors_age.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "age", palette = "Spectral", title = "Age Groups")
+dev.off()
+
+jpeg('demog_factors_race.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "race", palette = "Paired", title = "Population Groups")
+dev.off()
+
+jpeg('demog_factors_edu.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "edu", palette = "Pastel2", title = "Education")
+dev.off()
+
+jpeg('demog_factors_hh_inc.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "hh.inc", palette = "Set2", title = "Household Income")
+dev.off()
+
+jpeg('demog_factors_lsm.jpeg', quality = 100, type = "cairo")
+plot_demogs_tops(set_tops, category = "lsm", palette = "Set3", title = "Living Standards Measure")
+dev.off()
+
+  
+
+
 
 ## here want to assess this model
 
@@ -221,54 +435,4 @@ lm(scale(print5) ~ year.2008 + year.2010 + year.2012 + year.2014 + age.2 + age.3
 
 # considering by year....or not??
 
-# creating separate sets by year (NB from unstandarised set...):
-set_min_simple_print_02 <- set_min_simple_print %>%
-  filter(year ==  2002)
-set_min_simple_print_08 <- set_min_simple_print %>%
-  filter(year ==  2008)
-set_min_simple_print_10 <- set_min_simple_print %>%
-  filter(year ==  2010)
-set_min_simple_print_12 <- set_min_simple_print %>%
-  filter(year ==  2012)
-set_min_simple_print_14 <- set_min_simple_print %>%
-  filter(year ==  2014)
-
-# # standardising the media vehicle variables to mean = 0 and sd = 1 
-# set_min_simple_print_02  <- cbind.data.frame(set_min_simple_print_02[,1:strt-1], scale(set_min_simple_print_02[,strt:lst]))
-# set_min_simple_print_08  <- cbind.data.frame(set_min_simple_print_08[,1:strt-1], scale(set_min_simple_print_08[,strt:lst]))
-# set_min_simple_print_10  <- cbind.data.frame(set_min_simple_print_10[,1:strt-1], scale(set_min_simple_print_10[,strt:lst]))
-# set_min_simple_print_12  <- cbind.data.frame(set_min_simple_print_12[,1:strt-1], scale(set_min_simple_print_12[,strt:lst]))
-# set_min_simple_print_14  <- cbind.data.frame(set_min_simple_print_14[,1:strt-1], scale(set_min_simple_print_14[,strt:lst]))
-
-saveRDS(set_min_simple_print_02, "set_min_simple_print_02.rds")
-saveRDS(set_min_simple_print_08, "set_min_simple_print_08.rds")
-saveRDS(set_min_simple_print_10, "set_min_simple_print_10.rds")
-saveRDS(set_min_simple_print_12, "set_min_simple_print_12.rds")
-saveRDS(set_min_simple_print_14, "set_min_simple_print_14.rds")
-
-## read back
-# set_min_simple_print_02 <- readRDS("set_min_simple_print_02.rds")
-# set_min_simple_print_08 <- readRDS("set_min_simple_print_08.rds")
-# set_min_simple_print_10 <- readRDS("set_min_simple_print_10.rds")
-# set_min_simple_print_12 <- readRDS("set_min_simple_print_12.rds")
-# set_min_simple_print_14 <- readRDS("set_min_simple_print_14.rds")
-
-
-# consider and compare latent structures of simple confirmatory model fits by year
-
-
-
-lavaanList_fit <- semList(model = model_cfa, dataList = list(set_min_simple_print_02, set_min_simple_print_08, set_min_simple_print_10, set_min_simple_print_12, set_min_simple_print_14), store.slots = "partable") 
-coeffs <- coef(lavaanList_fit)
-colnames(coeffs) <- c("2002", "2008", "2010", "2012", "2014")
-cor(coeffs)
-
-parameterEstimates(lavaanList_fit, standardized = TRUE)
-
-parameterEstimates(fit_sem, standardized = TRUE)
-
-# consider fit measures for confirmatory factor analysis per period (and then for full pooled sets)
-fit_cf_02 <- lavaan::cfa(model_cfa, data = set_min_02)
-round(fitMeasures(fit_cf_02)[c('ifi','rmsea','srmr','aic','bic','nnfi','tli')], 2)
-summary(fit_cf_02, fit.measures = TRUE)
 
