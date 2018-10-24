@@ -196,6 +196,7 @@ system.time(out <- foreach(k = 1:16) %dopar% {
   
 } )
 
+
 stopCluster(cl)
 
 saveRDS(out, "own_boots1.rds")

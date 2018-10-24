@@ -214,13 +214,27 @@ round(fitMeasures(fit_cfa)[c('ifi','rmsea','srmr','nnfi','tli')], 2)
 #  `fit<-cfa(model, data=df, std.lv=T)`
 # Adding std.lv=T tells lavaan to use a standardized scale for the latent variable instead of fixing a loading to 1.
 
+# # consider internal reliability: cronbachs
+# print5 =~ Business.Day + Mail.n.Guardian + The.Sunday.Independent + Sunday.Times + You + Car + Cosmopolitan + Getaway + Topcar + X5FM
+# afrikaans =~ Rapport + Huisgenoot + Sarie
+# african =~ Drum + Bona + Metro.FM + Soccer.Laduma + Kickoff
+# social =~ DSTV + int.social + int.radio + int.search
+# freeTV =~ e.tv + SABC.1 + SABC.2 + SABC.3
+# intnews =~ int.print + int.news
 
+alpha(set_min_simple_print[,c(which(names(set_min_simple_print) %in% c("Business.Day", "Mail.n.Guardian", "The.Sunday.Independent", "Sunday.Times", "You", "Car", "Cosmopolitan", "Getaway", "Topcar", "X5FM")))], title = "print5")
+alpha(set_min_simple_print[,c(which(names(set_min_simple_print) %in% c("Drum", "Bona", "Metro.FM", "Soccer.Laduma", "Kickoff")))], title = "african")
+alpha(set_min_simple_print[,c(which(names(set_min_simple_print) %in% c("Rapport", "Huisgenoot","Sarie")))], title = "afrikaans")
+alpha(set_min_simple_print[,c(which(names(set_min_simple_print) %in% c("DSTV", "int.social", "int.radio", "int.search")))], title = "social")
+alpha(set_min_simple_print[,c(which(names(set_min_simple_print) %in% c("e.tv", "SABC.1", "SABC.2", "SABC.3")))], title = "freeTV")
+alpha(set_min_simple_print[,c(which(names(set_min_simple_print) %in% c("int.print", "int.news")))], title = "intnews")
 
-
-
-
-
-
+alpha(set_min_simple_print_14[,c(which(names(set_min_simple_print_14) %in% c("Business.Day", "Mail.n.Guardian", "The.Sunday.Independent", "Sunday.Times", "You", "Car", "Cosmopolitan", "Getaway", "Topcar", "X5FM")))], title = "print5")
+alpha(set_min_simple_print_14[,c(which(names(set_min_simple_print_14) %in% c("Drum", "Bona", "Metro.FM", "Soccer.Laduma", "Kickoff")))], title = "african")
+alpha(set_min_simple_print_14[,c(which(names(set_min_simple_print_14) %in% c("Rapport", "Huisgenoot","Sarie")))], title = "afrikaans")
+alpha(set_min_simple_print_14[,c(which(names(set_min_simple_print_14) %in% c("DSTV", "int.social", "int.radio", "int.search")))], title = "social")
+alpha(set_min_simple_print_14[,c(which(names(set_min_simple_print_14) %in% c("e.tv", "SABC.1", "SABC.2", "SABC.3")))], title = "freeTV")
+alpha(set_min_simple_print_14[,c(which(names(set_min_simple_print_14) %in% c("int.print", "int.news")))], title = "intnews")
 
 # predictions (scores)
 fit_cfa_predictions <- lavPredict(fit_cfa)
@@ -249,7 +263,7 @@ set_tops$race <- factor(set_tops$race,labels = c("black", "coloured", "indian", 
 set_tops$edu <- factor(set_tops$edu, labels = c("<matric", "matric",">matric" ) ,ordered = FALSE)
 set_tops$lsm <- factor(set_tops$lsm, labels = c("LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10"), ordered = FALSE)
 set_tops$sex <- factor(set_tops$sex, labels = c("male", "female"), ordered = FALSE)
-set_tops$hh.inc <- factor(set_tops$hh.inc, labels = c("<R2500","R2500-R6999","R7000-R11999",">=R12000"), ordered = FALSE)
+set_tops$hh.inc <- factor(set_tops$hh.inc, labels = c("<R5000","R5000-R10999","R11000-R19999","R20000+"), ordered = FALSE)
 set_tops$year <- factor(set_tops$year, ordered = FALSE)
 
 #plot counts and proportions of factors in population:
@@ -262,7 +276,7 @@ ggplot( set_tops %>%
   aes(x = tops, y = n, label = paste0(round(percent), "%"), fill = c("2")) +
   geom_bar(stat = 'identity', show.legend = FALSE) +
   # scale_fill_brewer(palette = "Spectral")
-  geom_text(position = "stack", size = 4) +
+  geom_text(position = position_stack(vjust = 0.5), size = 4) +
   labs(y = "count", title = "Total Sample Proportions") +
   theme(axis.title.x = element_blank())
 dev.off()
@@ -281,7 +295,7 @@ plot_demogs_tops <- function(set, category, palette = c("Dark2", "Accent", "Spec
   ggplot(by_factor) +
     aes_string(x = "tops", y = "percent", fill =  category, label = "label" ) +
     geom_bar(stat = 'identity') +
-    geom_text(position = "stack", size = 3) +
+    geom_text(position = position_stack(vjust = 0.5), size = 4) +
     # geom_text(aes_string(x = "top", y = "pos"), position = "stack", size = 3) +
     labs(title = title) +
     scale_fill_brewer(palette = palette) +
@@ -323,9 +337,18 @@ jpeg('demog_factors_lsm.jpeg', quality = 100, type = "cairo")
 plot_demogs_tops(set_tops, category = "lsm", palette = "Set3", title = "Living Standards Measure")
 dev.off()
 
-  
 
 
+# consider link with clusters:
+# read in dataset with clusters:
+set_simple_print_std_c <- readRDS("/Users/hans-peterbakker/Dropbox/Statistics/UCTDataScience/Thesis/explore_type/set_simple_print_std_c.rds")
+
+with_clusters <- set_tops %>%
+  mutate(cluster = factor(c(set_simple_print_std_c$cluster,set_simple_print_std_c$cluster),  labels = c("heavy", "internet", "medium", "light"), ordered = FALSE))
+
+jpeg("clusters_by_repertoire.jpeg", quality = 100)
+plot_demogs_tops(with_clusters, category = "cluster", palette = "Spectral", title = "Cluster Proportions by Repertoire")
+dev.off()
 
 ## here want to assess this model
 
