@@ -48,14 +48,23 @@ emm_set <- cbind.data.frame(out_all[[1]][,1:3],
   mutate(upper = c(prop.upper,equal.upper),
          lower = c(prop.lower,equal.lower))
 
+# need to rename income levels
+levels(emm_set$category)[levels(emm_set$category) == "<R2500"] <- "<R5000"
+levels(emm_set$category)[levels(emm_set$category) == "R2500-R6999"] <- "R5000-R10999"
+levels(emm_set$category)[levels(emm_set$category) == "R7000-R11999"] <- "R10000-R19999"
+levels(emm_set$category)[levels(emm_set$category) == ">=R12000"] <- "R20000+"
+
 # want to reorder the "category" variables to place gender first for comparible plotting with "type":
 emm_set$category <- factor(emm_set$category, levels = c("male", "female",
                                             "15-24", "25-44", "45-54", "55+",
                                             "black", "coloured", "indian",  "white",
                                             "<matric", "matric",  ">matric",
-                                            "<R2500", "R2500-R6999", "R7000-R11999", ">=R12000",
+                                            "<R5000", "R5000-R10999", "R11000-R19999", "R20000+",
                                             "LSM1-2",  "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10"))
 
+
+# need to change "intNews" to "intnews"
+emm_set$factor[which(emm_set$factor == "intNews")] <- "intnews"
 
 # function for plotting fitted models
 plot_emms <- function(dataset, fact) { # factor: one of...
@@ -66,7 +75,7 @@ plot_emms <- function(dataset, fact) { # factor: one of...
   
   # define upper and lower plots
   row1 <- c("male", "female","15-24","25-44", "45-54","55+","black", "coloured", "indian", "white")
-  row2 <- c("<matric", "matric",">matric", "<R2500","R2500-R6999","R7000-R11999",">=R12000", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
+  row2 <- c("<matric", "matric",">matric", "<R5000", "R5000-R10999", "R11000-R19999", "R20000+", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
   
   # subset the data by factor
   factor_data <- dataset %>% filter(factor == fact)
@@ -182,7 +191,7 @@ plot_emms(emm_set, "afrikaans")
 dev.off()
 
 jpeg("intNews_emm.jpeg", quality = 100)
-plot_emms(emm_set, "intNews")
+plot_emms(emm_set, "intnews")
 dev.off()
 
 jpeg("freeTV_emm.jpeg", quality = 100)
