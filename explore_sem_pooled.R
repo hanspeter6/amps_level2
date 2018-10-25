@@ -241,6 +241,13 @@ fit_cfa_predictions <- lavPredict(fit_cfa)
 summary(fit_cfa_predictions)
 hist(fit_cfa_predictions[,'social']) # o
 
+## trying to find mistake: why so many lsm 1-2 in "intnews"
+test <- cbind.data.frame(set_min_simple_print, fit_cfa_predictions)
+test2 <- test %>%
+  mutate(top = top_scores)
+
+range(test2$intnews)
+range(test2$freeTV)
 # identify highest positive score for each case:
 top_scores <- apply(fit_cfa_predictions, 1, function(v) names(v)[which.max(v)])
 
@@ -456,6 +463,40 @@ lm(scale(print5) ~ year.2008 + year.2010 + year.2012 + year.2014 + age.2 + age.3
 
 
 
-# considering by year....or not??
 
 
+
+
+
+
+# exploring "intnews" a bit... why the disparity rich and poor etc..
+# subset to consider only "intnews"
+intnews <- set_tops %>%
+  filter(tops == "intnews")
+
+table(intnews$lsm)/nrow(intnews) # confirms plots...
+
+# isolate lower income only:
+intnews_lowIncome <- intnews %>%
+  filter(hh.inc == "<R5000")
+# isolate upper incoome only:
+intnews_upIncome <- intnews %>%
+  filter(hh.inc == "R20000+")
+
+low_colSums <- colSums(intnews_lowIncome[,16:49])
+up_colSums <- colSums(intnews_upIncome[,16:49])
+
+upLow <- round(cbind.data.frame(low_colSums,up_colSums))
+
+# isolate lower lsm only:
+intnews_lowLSM <- intnews %>%
+  filter(lsm == "LSM1-2")
+# isolate upper lsm only:
+intnews_upLSM <- intnews %>%
+  filter(lsm == "LSM9-10")
+low_colSums2 <- colSums(intnews_lowLSM[,16:49])
+up_colSums2 <- colSums(intnews_upLSM[,16:49])
+
+upLow2 <- round(cbind.data.frame(low_colSums2,up_colSums2))
+
+### NO SOMETHING'S WRONG. WHY DO THESE SCORES SHOW MAX HERE.... GO BACK TO WHERE I SET TOPS...
