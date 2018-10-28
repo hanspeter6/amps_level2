@@ -241,17 +241,13 @@ fit_cfa_predictions <- lavPredict(fit_cfa)
 summary(fit_cfa_predictions)
 hist(fit_cfa_predictions[,'social']) # o
 
-## trying to find mistake: why so many lsm 1-2 in "intnews"
-test <- cbind.data.frame(set_min_simple_print, fit_cfa_predictions)
-test2 <- test %>%
-  mutate(top = top_scores)
+apply(fit_cfa_predictions, 2, mean) # effectively zer0
+apply(fit_cfa_predictions, 2, sd) # close to but not 1.
 
-range(test2$intnews)
-range(test2$freeTV)
-# identify highest positive score for each case:
-top_scores <- apply(fit_cfa_predictions, 1, function(v) names(v)[which.max(v)])
+# identify highest positive score for each case in scaled dataset
+top_scores <- apply(scale(fit_cfa_predictions), 1, function(v) names(v)[which.max(v)])
 
-
+mean(top_scores[,2])
 # manipulate set for graphics
 set_tops <- set_min_simple_print %>%
   mutate(top = top_scores) %>%
@@ -500,3 +496,5 @@ up_colSums2 <- colSums(intnews_upLSM[,16:49])
 upLow2 <- round(cbind.data.frame(low_colSums2,up_colSums2))
 
 ### NO SOMETHING'S WRONG. WHY DO THESE SCORES SHOW MAX HERE.... GO BACK TO WHERE I SET TOPS...
+apply(fit_cfa_predictions, 2, range)
+

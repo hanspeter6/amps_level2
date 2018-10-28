@@ -51,7 +51,7 @@ emm_set <- cbind.data.frame(out_all[[1]][,1:3],
 # need to rename income levels
 levels(emm_set$category)[levels(emm_set$category) == "<R2500"] <- "<R5000"
 levels(emm_set$category)[levels(emm_set$category) == "R2500-R6999"] <- "R5000-R10999"
-levels(emm_set$category)[levels(emm_set$category) == "R7000-R11999"] <- "R10000-R19999"
+levels(emm_set$category)[levels(emm_set$category) == "R7000-R11999"] <- "R11000-R19999"
 levels(emm_set$category)[levels(emm_set$category) == ">=R12000"] <- "R20000+"
 
 # want to reorder the "category" variables to place gender first for comparible plotting with "type":
