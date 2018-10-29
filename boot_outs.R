@@ -67,56 +67,226 @@ emm_set$category <- factor(emm_set$category, levels = c("male", "female",
 emm_set$factor[which(emm_set$factor == "intNews")] <- "intnews"
 
 # function for plotting fitted models
-plot_emms <- function(dataset, fact) { # factor: one of...
+plot_factors_wraps <- function(dataset, fact) { # factor: one of...
   
   # making sure I have the packages
   require(tidyverse)
   require(gridExtra)
-  
-  # define upper and lower plots
-  row1 <- c("male", "female","15-24","25-44", "45-54","55+","black", "coloured", "indian", "white")
-  row2 <- c("<matric", "matric",">matric", "<R5000", "R5000-R10999", "R11000-R19999", "R20000+", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
+  require(ggplot2)
   
   # subset the data by factor
   factor_data <- dataset %>% filter(factor == fact)
-    
-  # row one plot
-  plot_row1 <- ggplot(data = factor_data[which(factor_data$category %in% row1),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
-    geom_line(size = 0.5) +
-    facet_grid(.~ category) +
-    geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
-    theme(axis.text.x = element_text(size = 6)) +
-    labs(y = "engagement") +
-    theme(legend.position = "bottom")
-    
-  # row two plot
-  plot_row2 <-  ggplot(data = factor_data[which(factor_data$category %in% row2),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
-    geom_line(size = 0.5) +
-    facet_grid(.~ category) +
-    geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
-    labs(y = "engagement")
   
-  #extract legend
-  ##https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs
-  g_legend <- function(a.gplot) {
-    tmp <- ggplot_gtable(ggplot_build(a.gplot))
-    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-    legend <- tmp$grobs[[leg]]
-    return(legend)}
-  
-  mylegend<-g_legend(plot_row1)
-  
-  grid.arrange(arrangeGrob(plot_row1 + theme(legend.position="none"),
-                                 plot_row2 + theme(legend.position="none")),
-               top = paste0("Estimated Marginal Means: ", "'", fact, "'"),
-               mylegend,
-               nrow=2,
-               heights=c(10, 1))
-  
-  # coord_cartesian(ylim=c(-0.5, 0.5)) + 
-  # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.2))
+  # facet plot
+  ggplot(data = factor_data, aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+    geom_line(size = 0.8) +
+    facet_wrap(.~ category, ncol = 6) +
+    geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.6, width = 0.2, alpha = 0.8) +
+    theme(axis.text.x = element_text(size = 12, angle = 45 ),
+          axis.text.y = element_text(size = 12),
+          strip.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+          axis.title.y = element_text(size = 22),
+          axis.title.x = element_text(size = 22),
+          axis.ticks = element_line(size = 1),
+          plot.margin = ggplot2::margin(0.5,0.5,0.5,0.5, unit = 'cm'),
+          axis.ticks.length = unit(0.2, "cm"),
+          panel.spacing = unit(5, 'pt'),
+          panel.grid.minor = element_line(size = 0.5),
+          panel.grid.major = element_line(size = 0.8),
+          legend.position = c(0.85,0.07),
+          legend.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+          legend.title = element_text(size = 20),
+          legend.key.height = unit(2, "cm"),
+          legend.key.size = unit(2, "cm")
+    ) +
+    scale_x_discrete(labels = c("'02","'08","'10","'12", "'14")) +
+    coord_cartesian(ylim = c(-2, 3)) +
+    labs(x = "years (2002 - 2014)", y = "engagement")
 }
 
+# send plots to files
+
+pdf(file = "freeTV_emm.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+plot_factors_wraps(emm_set, "freeTV")
+dev.off()
+
+pdf(file = "print5_emm.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+plot_factors_wraps(emm_set, "print5")
+dev.off()
+
+pdf(file = "social_emm.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+plot_factors_wraps(emm_set, "social")
+dev.off()
+
+pdf(file = "african_emm.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+plot_factors_wraps(emm_set, "african")
+dev.off()
+
+pdf(file = "afrikaans_emm.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+plot_factors_wraps(emm_set, "afrikaans")
+dev.off()
+
+pdf(file = "intnews_emm.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+plot_factors_wraps(emm_set, "intnews")
+dev.off()
+# 
+# jpeg("print5_emm.jpeg", res = 300)
+# plot_factors_wraps(emm_set, "print5")
+# dev.off()
+# 
+# jpeg("social_emm.jpeg", res = 300)
+# plot_factors_wraps(emm_set, "social")
+# dev.off()
+# 
+# jpeg("african_emm.jpeg", res = 300)
+# plot_factors_wraps(emm_set, "african")
+# dev.off()
+# 
+# jpeg("afrikaans_emm.jpeg", res = 300)
+# plot_factors_wraps(emm_set, "afrikaans")
+# dev.off()
+# 
+# jpeg("intNews_emm.jpeg", res = 300)
+# plot_factors_wraps(emm_set, "intnews")
+# dev.off()
+# 
+# jpeg("freeTV_emm.jpeg", res = 300)
+# plot_factors_wraps(emm_set, "freeTV")
+# dev.off()
+
+# 
+# ##Experiment with pdf
+# plot_test <- function(dataset, fact) { # factor: one of...
+#   
+#   # making sure I have the packages
+#   require(tidyverse)
+#   require(gridExtra)
+#   require(ggplot2)
+#   
+#   # subset the data by factor
+#   factor_data <- dataset %>% filter(factor == fact)
+#   
+#   # facet plot
+#   ggplot(data = factor_data, aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+#     geom_line(size = 0.8) +
+#     facet_wrap(.~ category, ncol = 6) +
+#     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.6, width = 0.2, alpha = 0.8) +
+#     theme(axis.text.x = element_text(size = 12, angle = 45 ),
+#           axis.text.y = element_text(size = 12),
+#           strip.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+#           axis.title.y = element_text(size = 22),
+#           axis.title.x = element_text(size = 22),
+#           axis.ticks = element_line(size = 1),
+#           plot.margin = ggplot2::margin(t = 0, unit = 'cm'),
+#           axis.ticks.length = unit(0.2, "cm"),
+#           panel.spacing = unit(5, 'pt'),
+#           panel.grid.minor = element_line(size = 0.5),
+#           panel.grid.major = element_line(size = 0.8),
+#           legend.position = c(0.85,0.07),
+#           legend.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+#           legend.title = element_text(size = 20),
+#           legend.key.height = unit(2, "cm"),
+#           legend.key.size = unit(2, "cm")
+#     ) +
+#     scale_x_discrete(labels = c("'02","'08","'10","'12", "'14")) +
+#     coord_cartesian(ylim = c(-2, 3)) +
+#     labs(x = "years (2002 - 2014)", y = "engagement")
+# }
+# 
+# pdf(file = "FileName.pdf", width = 12, height = 17, family = "Helvetica") # defaults to 7 x 7 inches
+# plot_test(emm_set, "freeTV")
+# dev.off()
+# 
+# # #PREVIOUS ATTEMPTS
+# plot_factors_wraps <- function(dataset, fact) { # factor: one of...
+#   
+#   # making sure I have the packages
+#   require(tidyverse)
+#   require(gridExtra)
+#   require(ggplot2)
+#   
+#   # subset the data by factor
+#   factor_data <- dataset %>% filter(factor == fact)
+#   
+#   # facet plot
+#   ggplot(data = factor_data, aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+#     geom_line(size = 0.1) +
+#     facet_wrap(.~ category, ncol = 6) +
+#     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.08, width = 0.08, alpha = 0.8) +
+#     theme(axis.text.x = element_text(size = 2, angle = 45 ),
+#           axis.text.y = element_text(size = 2),
+#           strip.text = element_text(size = 2, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+#           axis.title.y = element_text(size = 3),
+#           axis.title.x = element_text(size = 3),
+#           axis.ticks = element_line(size = 0.1),
+#           plot.margin = ggplot2::margin(t = 0, unit = 'cm'),
+#           axis.ticks.length = unit(0.05, "cm"),
+#           panel.spacing = unit(0.5, 'pt'),
+#           panel.grid.minor = element_line(size = 0.05),
+#           panel.grid.major = element_line(size = 0.08),
+#           legend.position = c(0.85,0.07),
+#           legend.text = element_text(size = 2, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+#           legend.title = element_text(size = 2),
+#           legend.key.height = unit(0.03, "cm"),
+#           legend.key.size = unit(0.2, "cm")
+#     ) +
+#     scale_x_discrete(labels = c("'02","'08","'10","'12", "'14")) +
+#     coord_cartesian(ylim = c(-2, 3)) +
+#     labs(x = "years (2002 - 2014)", y = "engagement")
+# }
+# 
+# 
+# # function for plotting fitted models
+# plot_emms <- function(dataset, fact) { # factor: one of...
+#   
+#   # making sure I have the packages
+#   require(tidyverse)
+#   require(gridExtra)
+#   
+#   # define upper and lower plots
+#   row1 <- c("male", "female","15-24","25-44", "45-54","55+","black", "coloured", "indian", "white")
+#   row2 <- c("<matric", "matric",">matric", "<R5000", "R5000-R10999", "R11000-R19999", "R20000+", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
+#   
+#   # subset the data by factor
+#   factor_data <- dataset %>% filter(factor == fact)
+#   
+#   # row one plot
+#   plot_row1 <- ggplot(data = factor_data[which(factor_data$category %in% row1),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+#     geom_line(size = 0.5) +
+#     facet_grid(.~ category) +
+#     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
+#     theme(axis.text.x = element_text(size = 6)) +
+#     labs(y = "engagement") +
+#     theme(legend.position = "bottom")
+#   
+#   # row two plot
+#   plot_row2 <-  ggplot(data = factor_data[which(factor_data$category %in% row2),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+#     geom_line(size = 0.5) +
+#     facet_grid(.~ category) +
+#     theme(axis.text.x = element_text(size = 6)) +
+#     geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.3, width = 0.4, alpha = 0.5) +
+#     labs(y = "engagement")
+#   
+#   #extract legend
+#   ##https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs
+#   g_legend <- function(a.gplot) {
+#     tmp <- ggplot_gtable(ggplot_build(a.gplot))
+#     leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+#     legend <- tmp$grobs[[leg]]
+#     return(legend)}
+#   
+#   mylegend<-g_legend(plot_row1)
+#   
+#   grid.arrange(arrangeGrob(plot_row1 + theme(legend.position="none"),
+#                            plot_row2 + theme(legend.position="none")),
+#                top = paste0("Estimated Marginal Means: ", "'", fact, "'"),
+#                mylegend,
+#                nrow=2,
+#                heights=c(10, 1))
+#   
+#   # coord_cartesian(ylim=c(-0.5, 0.5)) + 
+#   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.2))
+# }
 # # testing function for plotting fitted models
 # plot_emms_tester <- function(dataset, fact) { # factor: one of...
 #   
@@ -173,27 +343,3 @@ plot_emms <- function(dataset, fact) { # factor: one of...
 #   # coord_cartesian(ylim=c(-0.5, 0.5)) + 
 #   # scale_y_continuous(breaks=seq(-0.5, 0.5, 0.2))
 # }
-
-jpeg("print5_emm.jpeg", quality = 100)
-plot_emms(emm_set, "print5")
-dev.off()
-
-jpeg("social_emm.jpeg", quality = 100)
-plot_emms(emm_set, "social")
-dev.off()
-
-jpeg("african_emm.jpeg", quality = 100)
-plot_emms(emm_set, "african")
-dev.off()
-
-jpeg("afrikaans_emm.jpeg", quality = 100)
-plot_emms(emm_set, "afrikaans")
-dev.off()
-
-jpeg("intNews_emm.jpeg", quality = 100)
-plot_emms(emm_set, "intnews")
-dev.off()
-
-jpeg("freeTV_emm.jpeg", quality = 100)
-plot_emms(emm_set, "freeTV")
-dev.off()
