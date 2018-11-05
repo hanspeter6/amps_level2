@@ -1,5 +1,6 @@
 library(tidyverse)
 library(gridExtra)
+
 ### for processing of boot outputs
 
 # # read the output again
@@ -65,6 +66,156 @@ emm_set$category <- factor(emm_set$category, levels = c("male", "female",
 
 # need to change "intNews" to "intnews"
 emm_set$factor[which(emm_set$factor == "intNews")] <- "intnews"
+
+# function for plotting fitted models
+plot_factors_grid <- function(dataset, fact) { # factor: one of...
+  
+  # making sure I have the packages
+  require(tidyverse)
+  require(gridExtra)
+  require(ggplot2)
+  require(ggpubr)
+  library(grid)
+  
+  # subset the data by factor
+  factor_data <- dataset %>% filter(factor == fact)
+  
+  # define rows
+  row1 <- c("male", "female","15-24","25-44", "45-54","55+")
+  row2 <- c("black", "coloured", "indian", "white", "<matric", "matric",">matric")
+  row3 <- c("<R5000","R5000-R10999","R11000-R19999","R20000+", "LSM1-2", "LSM3-4", "LSM5-6", "LSM7-8", "LSM9-10")
+  
+  # row1 plots:
+  g1 <- ggplot(data = factor_data[which(factor_data$category %in% row1),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+    geom_line(size = 0.8) +
+    facet_grid(.~ category) +
+    geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.6, width = 0.2, alpha = 0.8) +
+    theme(axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 12),
+          strip.text = element_text(size = 15),
+          axis.title.y = element_text(size = 22),
+          axis.title.x = element_blank(),
+          axis.ticks = element_line(size = 1),
+          plot.margin = ggplot2::margin(0.5,0.5,0.5,0.5, unit = 'cm'),
+          axis.ticks.length = unit(0.2, "cm"),
+          panel.spacing = unit(5, 'pt'),
+          panel.grid.minor = element_line(size = 0.5),
+          panel.grid.major = element_line(size = 0.8),
+          legend.position = "bottom",
+          legend.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+          legend.title = element_text(size = 20),
+          legend.key.height = unit(2, "cm"),
+          legend.key.size = unit(2, "cm")
+    ) +
+    scale_x_discrete(labels = c("'02","'08","'10","'12", "'14")) +
+    coord_cartesian(ylim = c(-2, 3)) +
+    labs( y = "engagement")
+  
+  # change inter-panel gaps to separate demographic categories
+  gt1 = ggplot_gtable(ggplot_build(g1))
+  gt1$widths[8] = 4*gt1$widths[8]
+  
+  # row2 plots:
+  g2 <- ggplot(data = factor_data[which(factor_data$category %in% row2),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+    geom_line(size = 0.8) +
+    facet_grid(.~ category) +
+    geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.6, width = 0.2, alpha = 0.8) +
+    theme(axis.text.x = element_text(size = 14, angle = 45),
+          axis.text.y = element_text(size = 12),
+          strip.text = element_text(size = 15),
+          axis.title.y = element_text(size = 22),
+          axis.title.x = element_blank(),
+          axis.ticks = element_line(size = 1),
+          plot.margin = ggplot2::margin(0.5,0.5,0.5,0.5, unit = 'cm'),
+          axis.ticks.length = unit(0.2, "cm"),
+          panel.spacing = unit(5, 'pt'),
+          panel.grid.minor = element_line(size = 0.5),
+          panel.grid.major = element_line(size = 0.8),
+          legend.position = "bottom",
+          legend.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+          legend.title = element_text(size = 20),
+          legend.key.height = unit(2, "cm"),
+          legend.key.size = unit(2, "cm")
+    ) +
+    scale_x_discrete(labels = c("'02","'08","'10","'12", "'14")) +
+    coord_cartesian(ylim = c(-2, 3)) +
+    labs(y = "engagement")
+
+  # change inter-panel gaps to separate demographic categories
+  gt2 = ggplot_gtable(ggplot_build(g2))
+  gt2$widths[12] = 4*gt2$widths[12]
+
+  # row3 plots:
+  g3 <- ggplot(data = factor_data[which(factor_data$category %in% row3),], aes(x = year, y = mean, group = interaction(category,weights), col = weights)) +
+    geom_line(size = 0.8) +
+    facet_grid(.~ category) +
+    geom_errorbar(aes(ymax = upper, ymin = lower, colour = weights), size = 0.6, width = 0.2, alpha = 0.8) +
+    theme(axis.text.x = element_text(size = 14, angle = 45),
+          axis.text.y = element_text(size = 12),
+          strip.text = element_text(size = 12),
+          axis.title.y = element_text(size = 22),
+          axis.title.x = element_blank(),
+          axis.ticks = element_line(size = 1),
+          plot.margin = ggplot2::margin(0.5,0.5,0.5,0.5, unit = 'cm'),
+          axis.ticks.length = unit(0.2, "cm"),
+          panel.spacing = unit(5, 'pt'),
+          panel.grid.minor = element_line(size = 0.5),
+          panel.grid.major = element_line(size = 0.8),
+          legend.position = "bottom",
+          legend.text = element_text(size = 16, margin = ggplot2::margin(0,0,0,0, unit = "cm")),
+          legend.title = element_text(size = 20),
+          legend.key.height = unit(2, "cm"),
+          legend.key.size = unit(2, "cm")
+    ) +
+    scale_x_discrete(labels = c("'02","'08","'10","'12", "'14")) +
+    coord_cartesian(ylim = c(-2, 3)) +
+    labs( y = "engagement" )
+
+  # change inter-panel gaps to separate demographic categories
+  gt3 = ggplot_gtable(ggplot_build(g3))
+  gt3$widths[12] = 4*gt3$widths[12]
+
+  # arrange in grid
+  grid.arrange(gt1,gt2,gt3, nrow = 3)
+}
+
+# send plots to files (distorted due to need for higher resolution in publication)
+pdf(file = "freeTV_emm.pdf", width = 14, height = 20, family = "Helvetica", onefile = FALSE) # defaults to 7 x 7 inches
+plot_factors_grid(emm_set, "freeTV")
+dev.off()
+
+pdf(file = "intnews_emm.pdf", width = 14, height = 20, family = "Helvetica", onefile = FALSE) # defaults to 7 x 7 inches
+plot_factors_grid(emm_set, "intnews")
+dev.off()
+
+pdf(file = "african_emm.pdf", width = 14, height = 20, family = "Helvetica", onefile = FALSE) # defaults to 7 x 7 inches
+plot_factors_grid(emm_set, "african")
+dev.off()
+
+pdf(file = "afrikaans_emm.pdf", width = 14, height = 20, family = "Helvetica", onefile = FALSE) # defaults to 7 x 7 inches
+plot_factors_grid(emm_set, "afrikaans")
+dev.off()
+
+pdf(file = "social_emm.pdf", width = 14, height = 20, family = "Helvetica", onefile = FALSE) # defaults to 7 x 7 inches
+plot_factors_grid(emm_set, "social")
+dev.off()
+
+pdf(file = "print5_emm.pdf", width = 14, height = 20, family = "Helvetica", onefile = FALSE) # defaults to 7 x 7 inches
+plot_factors_grid(emm_set, "print5")
+dev.off()
+# end for now...
+
+
+
+
+
+
+
+
+
+
+
+
 
 # function for plotting fitted models
 plot_factors_wraps <- function(dataset, fact) { # factor: one of...

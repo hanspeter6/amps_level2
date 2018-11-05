@@ -78,6 +78,7 @@ test_mvn <- mvn(set_min_simple_print[sample(nrow(set_min_simple_print), size = 5
 set_pca <- prcomp(set_min_simple_print[,strt:lst])
 set_pca$sdev^2
 
+eigen(set_min_simple_print[,strt:lst])
 plot(set_pca)
 dim(set_pca$x) # 28 variables
 
